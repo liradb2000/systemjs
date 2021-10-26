@@ -89,7 +89,7 @@ function mainConfig(name, isMin) {
     input: `src/${name}.js`,
     output: {
       file: `dist/${name}${isMin ? '.min' : ''}.js`,
-      format: 'iife',
+      format: 'esm',
       strict: false,
       sourcemap: isMin,
       banner
@@ -111,7 +111,7 @@ function extrasConfig(isMin) {
       input: `src/extras/${extra}.js`,
       output: {
         file: `dist/extras/${extra}${isMin ? '.min' : ''}.js`,
-        format: 'iife',
+        format: 'esm',
         strict: false,
         compact: true,
         sourcemap: isMin
