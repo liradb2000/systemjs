@@ -5,7 +5,11 @@ import { errMsg } from '../err-msg.js';
  *
  * Note: This extra is deprecated and will be removed in the next major.
  */
-(function (global) {
+/**
+ * Support for a "transform" loader interface
+ * @deprecated 
+ */
+export default function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
 
   var instantiate = systemJSPrototype.instantiate;
@@ -33,4 +37,4 @@ import { errMsg } from '../err-msg.js';
   systemJSPrototype.transform = function (_id, source) {
     return source;
   };
-})(typeof self !== 'undefined' ? self : global);
+}

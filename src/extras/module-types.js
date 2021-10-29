@@ -4,7 +4,7 @@ import { resolveUrl } from '../common.js';
  * Loads JSON, CSS, Wasm module types based on file extension
  * filters and content type verifications
  */
-(function(global) {
+export default function(global) {
   var systemJSPrototype = global.System.constructor.prototype;
 
   var moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
@@ -72,4 +72,4 @@ import { resolveUrl } from '../common.js';
       return res;
     });
   };
-})(typeof self !== 'undefined' ? self : global);
+}

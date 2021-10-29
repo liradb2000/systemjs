@@ -4,7 +4,7 @@
  * Note: This extra is deprecated as the behaviour is now the default in core,
  *       so will be removed in the next major.
  */
-(function (global) {
+export default function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
 
   // hook System.register to know the last declaration binding
@@ -60,4 +60,4 @@
     };
     return register;
   };
-})(typeof self !== 'undefined' ? self : global);
+}

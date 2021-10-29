@@ -1,10 +1,15 @@
 /*
  * Interop for AMD modules to return the direct AMD binding instead of a
  * `{ default: amdModule }` object from `System.import`
- * 
+ *
  * Note: This extra is deprecated and will be removed in the next major.
  */
-(function (global) {
+/**
+ * Interop for AMD modules to return the direct AMD binding instead of a
+ * `{ default: amdModule }` object from `System.import`
+ * @deprecated 
+ */
+export default function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
   var originalImport = systemJSPrototype.import;
 
@@ -13,4 +18,4 @@
       return ns.__useDefault ? ns.default : ns;
     });
   };
-})(typeof self !== 'undefined' ? self : global);
+}

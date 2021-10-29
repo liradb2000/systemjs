@@ -1,20 +1,19 @@
-import replace from '@rollup/plugin-replace';
-import fs from 'fs';
-import path from 'path';
-import { terser } from 'rollup-plugin-terser';
+import replace from "@rollup/plugin-replace";
+import fs from "fs";
+import path from "path";
+import { terser } from "rollup-plugin-terser";
 
-const version = JSON.parse(fs.readFileSync('package.json')).version;
-const extras = fs.readdirSync(path.resolve(__dirname, 'src/extras'));
+const version = JSON.parse(fs.readFileSync("package.json")).version;
+const extras = fs.readdirSync(path.resolve(__dirname, "src/extras"));
 
 const terserOptions = {
   mangle: {
     eval: true,
     module: true,
     safari10: true,
-    toplevel: true
+    toplevel: true,
   },
-  parse: {
-  },
+  parse: {},
   compress: {
     unsafe: true,
     arguments: true,
@@ -33,13 +32,13 @@ const terserOptions = {
     unsafe_symbols: true,
     unsafe_comps: true,
     unsafe_Function: true,
-    unsafe_undefined: true
+    unsafe_undefined: true,
   },
   output: {
     comments(node, comment) {
       return /^\* SystemJS [0-9]\./.test(comment.value.trim());
     },
-    safari10: true
+    safari10: true,
   },
   ecma: 5, // specify one of: 5, 2015, 2016, 2017 or 2018
   keep_classnames: false,
@@ -49,16 +48,18 @@ const terserOptions = {
   nameCache: null, // or specify a name cache object
   safari10: true,
   toplevel: true,
-  warnings: false
+  warnings: false,
 };
 
 const buildProd = !process.env.dev;
 
 export default [
-  mainConfig('system', true),
-  buildProd && mainConfig('system', false),
-  mainConfig('s', true),
-  buildProd && mainConfig('s', false),
+  mainConfig("system", true),
+  buildProd && mainConfig("system", false),
+  mainConfig("s", true),
+  buildProd && mainConfig("s", false),
+  mainConfig("system-react", true),
+  buildProd && mainConfig("system-react", false),
   ...extrasConfig(true),
   ...prodExtras(),
 ].filter(Boolean);
@@ -72,13 +73,15 @@ function prodExtras() {
 }
 
 function mainConfig(name, isMin) {
-  const sjs = name === 's';
+  const sjs = name === "s" || name.includes("react");
   let banner;
   if (sjs) {
-    banner = !isMin ? `/*
+    banner = !isMin
+      ? `/*
 * SJS ${version}
 * Minimal SystemJS Build
-*/` : null;
+*/`
+      : null;
   } else {
     banner = `/*
 * SystemJS ${version}
@@ -88,41 +91,41 @@ function mainConfig(name, isMin) {
   return {
     input: `src/${name}.js`,
     output: {
-      file: `dist/${name}${isMin ? '.min' : ''}.js`,
-      format: 'esm',
+      file: `dist/${name}${isMin ? ".min" : ""}.js`,
+      format: "esm",
       strict: false,
       sourcemap: isMin,
-      banner
+      banner,
     },
     plugins: [
       replace({
-        'process.env.SYSTEM_PRODUCTION': sjs ? 'true' : 'false',
-        'process.env.SYSTEM_BROWSER': 'true'
+        "process.env.SYSTEM_PRODUCTION": sjs ? "true" : "false",
+        "process.env.SYSTEM_BROWSER": "true",
       }),
-      isMin && terser(terserOptions)
-    ]
+      isMin && terser(terserOptions),
+    ],
   };
 }
 
 function extrasConfig(isMin) {
-  return extras.map(extra => {
-    extra = extra.replace('.js', '');
+  return extras.map((extra) => {
+    extra = extra.replace(".js", "");
     return {
       input: `src/extras/${extra}.js`,
       output: {
-        file: `dist/extras/${extra}${isMin ? '.min' : ''}.js`,
-        format: 'esm',
+        file: `dist/extras/${extra}${isMin ? ".min" : ""}.js`,
+        format: "esm",
         strict: false,
         compact: true,
-        sourcemap: isMin
+        sourcemap: isMin,
       },
       plugins: [
         isMin && terser(terserOptions),
         replace({
-          'process.env.SYSTEM_PRODUCTION': isMin ? 'true' : 'false',
-	  'process.env.SYSTEM_BROWSER': true
-        })
-      ]
+          "process.env.SYSTEM_PRODUCTION": isMin ? "true" : "false",
+          "process.env.SYSTEM_BROWSER": true,
+        }),
+      ],
     };
   });
 }

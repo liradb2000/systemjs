@@ -1,11 +1,10 @@
 {
   "name": "systemjs",
   "version": "6.11.0",
-  "main": "dist/system-node.cjs",
+  "main": "dist/system-react.js",
   "exports": {
     ".": {
-      "node": "./dist/system-node.cjs",
-      "default": "./dist/system.min.js"
+      "default": "./dist/system-react.min.js"
     },
     "./s.js": "./dist/s.min.js",
     "./package.json": "./package.json",
@@ -16,7 +15,7 @@
     "type": "git",
     "url": "git://github.com/systemjs/systemjs"
   },
-  "author": "Guy Bedford",
+  "author": "liradb2000(DaBeom Kim)",
   "type": "script",
   "license": "MIT",
   "files": [

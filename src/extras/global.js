@@ -3,7 +3,7 @@
  * Extra for the s.js build only
  * (Included by default in system.js build)
  */
-(function (global) {
+export default function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
 
   // safari unpredictably lists some new globals first or second in object order
@@ -93,4 +93,4 @@
       || !isNaN(p) && p < global.length
       || isIE11 && global[p] && typeof window !== 'undefined' && global[p].parent === window;
   }
-})(typeof self !== 'undefined' ? self : global);
+}
