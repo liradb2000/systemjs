@@ -1,4 +1,87 @@
-# SystemJS
+# Modded SystemJS for CRA(Create-React-app) and Microfrontend
+
+> **WARNING**: Work In Progress 
+
+You can try it
+```
+npm i @liradb2000/systemjs
+```
+```javascript
+import * as React from "react";
+import logo from "./logo.svg";
+import "./App.css";
+
+import { System as core, applyImportMap } from "@liradb2000/systemjs";
+import { namedRegister } from "@liradb2000/systemjs/dist/extras";
+
+function TestComp() {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: 100,
+        height: 100,
+        backgroundColor: "white",
+      }}
+    />
+  );
+}
+
+function App() {
+  // const global = useRef({});
+  const [Tests, setA] = React.useState(<TestComp />);
+
+  React.useEffect(() => {
+
+    function test() {
+      const global = {};
+      const System = new core(global);
+      namedRegister(global);
+      System.prepareImport();
+      System.set("app:react", { default: React, __useDefault: true });
+      applyImportMap(System, {
+        imports: {
+          react: "app:react",
+        },
+      });
+
+      // eslint-disable-next-line no-restricted-properties
+      global.System.import("./test.js").then((ImportedObject) => {
+        setTimeout(() => {
+          setA(<ImportedObject.Main />);
+        }, 5000);
+        
+      });
+    }
+    test();
+  }, []);
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.js</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+        {Tests}
+      </header>
+    </div>
+  );
+}
+
+export default App;
+
+```
 
 [![Build Status](https://travis-ci.com/systemjs/systemjs.svg?branch=master)](https://travis-ci.com/systemjs/systemjs)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
