@@ -25,7 +25,7 @@ export default function (global) {
   }
 
   var register = systemJSPrototype.register;
-  systemJSPrototype.register = function (name, deps, declare) {
+  systemJSPrototype.register = async function (name, deps, declare) {
     if (typeof name !== 'string')
       return register.apply(this, arguments);
     var define = [deps, declare];
@@ -38,7 +38,7 @@ export default function (global) {
     //   firstNamedDefine = null;
     //   firstName = null;
     // });
-     register.apply(this, [deps, declare]);
+     await register.apply(this, [deps, declare]);
      return [name, define]
   };
 
