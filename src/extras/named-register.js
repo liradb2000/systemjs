@@ -17,7 +17,7 @@ export default function (global) {
   SystemJS.prototype = systemJSPrototype;
   System.constructor = SystemJS;
 
-  var firstNamedDefine, firstName;
+  // var firstNamedDefine, firstName;
 
   function setRegisterRegistry(systemInstance) {
     systemInstance.registerRegistry = Object.create(null);
@@ -30,15 +30,16 @@ export default function (global) {
       return register.apply(this, arguments);
     var define = [deps, declare];
     this.registerRegistry[name] = define;
-    if (!firstNamedDefine) {
-      firstNamedDefine = define;
-      firstName = name;
-    }
-    Promise.resolve().then(function () {
-      firstNamedDefine = null;
-      firstName = null;
-    });
-    return register.apply(this, [deps, declare]);
+    // if (!firstNamedDefine) {
+    //   firstNamedDefine = define;
+    //   firstName = name;
+    // }
+    // Promise.resolve().then(function () {
+    //   firstNamedDefine = null;
+    //   firstName = null;
+    // });
+     register.apply(this, [deps, declare]);
+     return [name, define]
   };
 
   var resolve = systemJSPrototype.resolve;
@@ -66,7 +67,7 @@ export default function (global) {
   };
 
   var getRegister = systemJSPrototype.getRegister;
-  systemJSPrototype.getRegister = function (url) {
+  systemJSPrototype.getRegister = function (url, firstName, firstNamedDefine) {
     // Calling getRegister() because other extras need to know it was called so they can perform side effects
     var register = getRegister.call(this, url);
 
@@ -74,8 +75,8 @@ export default function (global) {
       this.namedRegisterAliases[firstName] = url;
     }
     var result = firstNamedDefine || register;
-    firstNamedDefine = null;
-    firstName = null;
+    // firstNamedDefine = null;
+    // firstName = null;
     return result;
   }
 }
