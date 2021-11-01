@@ -39,7 +39,7 @@ export default function (global) {
     //   firstName = null;
     // });
      await register.apply(this, [deps, declare]);
-     return [name, define]
+     return {firstName: name, firstNamedDefine: define}
   };
 
   var resolve = systemJSPrototype.resolve;

@@ -34,7 +34,7 @@ systemJSPrototype.instantiate = function (url, parent) {
       return (new Function("System",source))(loader)
         // (0, eval)(source);
     });
-  }).then(function ([firstName = undefined, firstNamedDefine = undefined] = [undefined, undefined]){
+  }).then(function ({firstName = undefined, firstNamedDefine = undefined} = {}){
     return loader.getRegister(url, firstName, firstNamedDefine);
   });
 };
