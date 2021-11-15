@@ -41,6 +41,11 @@ export function setBaseUrl(loader, url) {
   loader[BASE_URL] = new URL(url).href;
 }
 
+export function setRegistryProxy(loader, handler) {
+  ensureValidSystemLoader(loader);
+  loader[REGISTRY] = new Proxy(loader[REGISTRY], handler);
+}
+
 function ensureValidSystemLoader(loader) {
   if (!loader[REGISTRY])
     throw new Error("A valid SystemJS instance must be provided");
