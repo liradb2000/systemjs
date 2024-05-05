@@ -30,16 +30,17 @@ export default function SystemJS(global) {
 
 var systemJSPrototype = SystemJS.prototype;
 
-systemJSPrototype.import = function (id, parentUrl) {
+systemJSPrototype.import = function (id, parentUrl, meta) {
   var loader = this;
+  (parentUrl && typeof parentUrl === 'object') && (meta = parentUrl, parentUrl = undefined);
   return Promise.resolve(loader.prepareImport())
-    .then(function () {
-      return loader.resolve(id, parentUrl);
-    })
-    .then(function (id) {
-      var load = getOrCreateLoad(loader, id);
-      return load.C || topLevelLoad(loader, load);
-    });
+  .then(function() {
+    return loader.resolve(id, parentUrl, meta);
+  })
+  .then(function (id) {
+    var load = getOrCreateLoad(loader, id, undefined, meta);
+    return load.C || topLevelLoad(loader, load);
+  });
 };
 
 // Hookable createContext function -> allowing eg custom import meta
@@ -64,9 +65,9 @@ function triggerOnload(loader, load, err, isErrSource) {
 }
 
 // var lastRegister;
-systemJSPrototype.register = function (deps, declare) {
+systemJSPrototype.register = function (deps, declare, metas) {
   // lastRegister = [deps, declare];
-  return { firstNamedDefine: [deps, declare] }
+  return { firstNamedDefine: [deps, declare, metas] }
 };
 
 /*
@@ -78,7 +79,7 @@ systemJSPrototype.getRegister = function (url, _, firstNamedDefine) {
   return firstNamedDefine;
 };
 
-export function getOrCreateLoad(loader, id, firstParentUrl) {
+export function getOrCreateLoad (loader, id, firstParentUrl, meta) {
   var load = loader[REGISTRY][id];
   if (load) return load;
 
@@ -88,7 +89,7 @@ export function getOrCreateLoad(loader, id, firstParentUrl) {
 
   var instantiatePromise = Promise.resolve()
     .then(function () {
-      return loader.instantiate(id, firstParentUrl);
+      return loader.instantiate(id, firstParentUrl, meta);
     })
     .then(
       function (registration) {
@@ -130,45 +131,41 @@ export function getOrCreateLoad(loader, id, firstParentUrl) {
             }
           return value;
         }
-        var declared = registration[1](
-          _export,
-          registration[1].length === 2
-            ? {
-                import: function (importId) {
-                  return loader.import(importId, id);
-                },
-                meta: loader.createContext(id),
-              }
-            : undefined
-        );
-        load.e = declared.execute || function () {};
-        return [registration[0], declared.setters || []];
+      
+    var declared = registration[1](_export, registration[1].length === 2 ? {
+      import: function (importId, meta) {
+        return loader.import(importId, id, meta);
       },
-      function (err) {
-        load.e = null;
-        load.er = err;
-        if (!process.env.SYSTEM_PRODUCTION)
-          triggerOnload(loader, load, err, true);
-        throw err;
-      }
-    );
+      meta: loader.createContext(id)
+    } : undefined);
+    load.e = declared.execute || function () {};
+    return [registration[0], declared.setters || [], registration[2] || []];
+  }, function (err) {
+    load.e = null;
+    load.er = err;
+    if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
+    throw err;
+  });
 
-  var linkPromise = instantiatePromise.then(function (instantiation) {
-    return Promise.all(
-      instantiation[0].map(function (dep, i) {
-        var setter = instantiation[1][i];
-        return Promise.resolve(loader.resolve(dep, id)).then(function (depId) {
-          var depLoad = getOrCreateLoad(loader, depId, id);
-          // depLoad.I may be undefined for already-evaluated
-          return Promise.resolve(depLoad.I).then(function () {
-            if (setter) {
-              depLoad.i.push(setter);
-              // only run early setters when there are hoisted exports of that module
-              // the timing works here as pending hoisted export calls will trigger through importerSetters
-              if (depLoad.h || !depLoad.I) setter(depLoad.n);
-            }
-            return depLoad;
-          });
+  var linkPromise = instantiatePromise
+  .then(function (instantiation) {
+    return Promise.all(instantiation[0].map(function (dep, i) {
+      var setter = instantiation[1][i];
+      var meta = instantiation[2][i];
+      return Promise.resolve(loader.resolve(dep, id))
+      .then(function (depId) {
+        var depLoad = getOrCreateLoad(loader, depId, id, meta);
+        // depLoad.I may be undefined for already-evaluated
+        return Promise.resolve(depLoad.I)
+        .then(function () {
+          if (setter) {
+            depLoad.i.push(setter);
+            // only run early setters when there are hoisted exports of that module
+            // the timing works here as pending hoisted export calls will trigger through importerSetters
+            if (depLoad.h || !depLoad.I)
+              setter(depLoad.n);
+          }
+          return depLoad;})
         });
       })
     ).then(function (depLoads) {
@@ -178,14 +175,16 @@ export function getOrCreateLoad(loader, id, firstParentUrl) {
   if (!process.env.SYSTEM_BROWSER) linkPromise.catch(function () {});
 
   // Capital letter = a promise function
-  return (load = loader[REGISTRY][id] =
-    {
-      id: id,
-      // importerSetters, the setters functions registered to this dependency
-      // we retain this to add more later
-      i: importerSetters,
-      // module namespace object
-      n: ns,
+  return load = loader[REGISTRY][id] = {
+    id: id,
+    // importerSetters, the setters functions registered to this dependency
+    // we retain this to add more later
+    i: importerSetters,
+    // module namespace object
+    n: ns,
+    // extra module information for import assertion
+    // shape like: { assert: { type: 'xyz' } }
+    m: meta,
 
       // instantiate
       I: instantiatePromise,
@@ -213,7 +212,7 @@ export function getOrCreateLoad(loader, id, firstParentUrl) {
 
       // parent instantiator / executor
       p: undefined,
-    });
+    }
 }
 
 function instantiateAll(loader, load, parent, loaded) {
@@ -264,6 +263,16 @@ function postOrderExec(loader, load, seen) {
     return;
   }
 
+  // From here we're about to execute the load.
+  // Because the execution may be async, we pop the `load.e` first.
+  // So `load.e === null` always means the load has been executed or is executing.
+  // To inspect the state:
+  // - If `load.er` is truthy, the execution has threw or has been rejected;
+  // - otherwise, either the `load.E` is a promise, means it's under async execution, or
+  // - the `load.E` is null, means the load has completed the execution or has been async resolved.
+  var exec = load.e;
+  load.e = null;
+
   // deps execute first, unless circular
   var depLoadPromises;
   load.d.forEach(function (depLoad) {
@@ -271,7 +280,8 @@ function postOrderExec(loader, load, seen) {
       var depLoadPromise = postOrderExec(loader, depLoad, seen);
       if (depLoadPromise)
         (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-    } catch (err) {
+    }
+    catch (err) {
       load.e = null;
       load.er = err;
       if (!process.env.SYSTEM_PRODUCTION)
@@ -285,7 +295,7 @@ function postOrderExec(loader, load, seen) {
 
   function doExec() {
     try {
-      var execPromise = load.e.call(nullContext);
+      var execPromise = exec.call(nullContext);
       if (execPromise) {
         execPromise = execPromise.then(
           function () {
@@ -310,10 +320,10 @@ function postOrderExec(loader, load, seen) {
     } catch (err) {
       load.er = err;
       throw err;
-    } finally {
+    }
+    finally {
       load.e = null;
-      if (!process.env.SYSTEM_PRODUCTION)
-        triggerOnload(loader, load, load.er, true);
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, load.er, true);
     }
   }
 }

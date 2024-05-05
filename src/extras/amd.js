@@ -39,21 +39,20 @@ export default function (global) {
     }
     if (splice) amdDefineDeps.length -= splice;
     var amdExec = amdDefineExec;
-    return [
-      amdDefineDeps,
-      function (_export) {
-        _export({ default: exports, __useDefault: true });
-        return {
-          setters: setters,
-          execute: function () {
-            var amdResult = amdExec.apply(exports, depModules);
-            if (amdResult !== undefined) module.exports = amdResult;
-            _export(module.exports);
-            _export("default", module.exports);
-          },
-        };
-      },
-    ];
+    return [amdDefineDeps, function (_export, _context) {
+      _export({ default: exports, __useDefault: true });
+      return {
+        setters: setters,
+        execute: function () {
+          module.uri = _context.meta.url;
+          var amdResult = amdExec.apply(exports, depModules);
+          if (amdResult !== undefined)
+            module.exports = amdResult;
+          _export(module.exports);
+          _export('default', module.exports);
+        }
+      };
+    }];
 
     // needed to avoid iteration scope issues
     function createSetter(idx) {

@@ -8,8 +8,9 @@ export default function(global) {
   var systemJSPrototype = global.System.constructor.prototype;
 
   var moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
+  var _shouldFetch = systemJSPrototype.shouldFetch.bind(systemJSPrototype)
   systemJSPrototype.shouldFetch = function (url) {
-    return moduleTypesRegEx.test(url);
+    return _shouldFetch(url) || moduleTypesRegEx.test(url);
   };
 
   var jsonContentType = /^application\/json(;|$)/;
@@ -20,6 +21,9 @@ export default function(global) {
   systemJSPrototype.fetch = function (url, options) {
     return fetch(url, options)
     .then(function (res) {
+      if (options.passThrough)
+        return res;
+
       if (!res.ok)
         return res;
       var contentType = res.headers.get('content-type');
@@ -36,7 +40,7 @@ export default function(global) {
         return res.text()
         .then(function (source) {
           source = source.replace(/url\(\s*(?:(["'])((?:\\.|[^\n\\"'])+)\1|((?:\\.|[^\s,"'()\\])+))\s*\)/g, function (match, quotes, relUrl1, relUrl2) {
-            return 'url(' + quotes + resolveUrl(relUrl1 || relUrl2, url) + quotes + ')';
+            return ['url(', quotes, resolveUrl(relUrl1 || relUrl2, url), quotes, ')'].join('');
           });
           return new Response(new Blob([
             'System.register([],function(e){return{execute:function(){var s=new CSSStyleSheet();s.replaceSync(' + JSON.stringify(source) + ');e("default",s)}}})'

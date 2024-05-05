@@ -272,6 +272,17 @@ describe('Core API', function () {
 
       assert([...loader.entries()].some(entry => entry[0] === 'http://i' && entry[1].a === 'b'));
     })
+
+    it('Supports System.getImportMap', function () {
+      const importMap = loader.getImportMap();
+
+      assert(
+        Object.hasOwn(importMap, 'imports') && 
+        Object.hasOwn(importMap, 'scopes') && 
+        Object.hasOwn(importMap, 'depcache') && 
+        Object.hasOwn(importMap, 'integrity')
+      );
+    })
   });
 });
 
@@ -453,6 +464,15 @@ describe('Loading Cases', function() {
 
       const m = await loader.import('main');
       assert.equal(m.default, 42);
+    });
+    it('Concurrent top level import threads', async function() {
+        // Use two different top level entry is on purpose:
+        // currently top level lop would be cached.
+        const thread1 = loader.import('./tla/concurrent-top-level-import-threads/main.js');
+        const thread2 = loader.import('./tla/concurrent-top-level-import-threads/dep.js');
+        const main = await thread1;
+        const dep = await thread2;
+        assert.equal(main.stamp, dep.stamp);
     });
   });
 

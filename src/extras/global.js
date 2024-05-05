@@ -47,9 +47,9 @@ export default function (global) {
   }
 
   var impt = systemJSPrototype.import;
-  systemJSPrototype.import = function (id, parentUrl) {
+  systemJSPrototype.import = function (id, parentUrl, meta) {
     noteGlobalProps();
-    return impt.call(this, id, parentUrl);
+    return impt.call(this, id, parentUrl, meta);
   };
 
   var emptyInstantiation = [[], function () { return {} }];
