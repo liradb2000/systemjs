@@ -1,6 +1,6 @@
 {
   "name": "@liradb2000/systemjs",
-  "version": "6.15.1",
+  "version": "6.15.1+nxv",
   "main": "dist/system-react.js",
   "exports": {
     ".": {
