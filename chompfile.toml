@@ -12,7 +12,7 @@ extensions = [
 
 [[task]]
 name = 'build'
-deps = ['dist/system.js', 'dist/system.min.js', 'dist/s.js', 'dist/s.min.js', 'dist/system-node.cjs', 'dist/extras/*.js']
+deps = ['dist/system.js', 'dist/system.min.js', 'dist/s.js', 'dist/s.min.js', 'dist/system-react.js','dist/system-react.min.js','dist/system-node.cjs', 'dist/extras/*.js']
 
 [[task]]
 target = 'dist/system.js'
@@ -47,6 +47,25 @@ strict = false
 package = '@rollup/plugin-replace'
 "process.env.SYSTEM_PRODUCTION" = 'true'
 "process.env.SYSTEM_BROWSER" = 'true'
+
+
+[[task]]
+target = 'dist/system-react.js'
+deps = ['src/system-react.js', 'src/system-core.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
+template = 'rollup'
+[task.template-options]
+onwarn = false
+[task.template-options.output]
+banner = '''/*!
+ * SystemJS #PJSON_VERSION
+ */'''
+format = 'esm'
+strict = false
+[[task.template-options.plugin]]
+package = '@rollup/plugin-replace'
+"process.env.SYSTEM_PRODUCTION" = 'true'
+"process.env.SYSTEM_BROWSER" = 'true'
+"process.env.NODE_ENV" = 'production'
 
 [[task]]
 deps = ['src/extras/#.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
@@ -94,7 +113,7 @@ esm = false
 [[task]]
 name = 'footprint'
 template = 'footprint'
-deps = ['dist/system.min.js', 'dist/s.min.js']
+deps = ['dist/system.min.js', 'dist/s.min.js','dist/system-react.min.js']
 
 [[task]]
 name = 'test'
@@ -102,13 +121,13 @@ deps = ['test:browser', 'test:internal', 'test:node']
 
 [[task]]
 name = 'test:browser:watch'
-deps = ['dist/system.js', 'dist/extras/*.js', 'npm:install']
+deps = ['dist/system.js', 'dist/system-react.js', 'dist/extras/*.js', 'npm:install']
 env = { WATCH_MODE = 'true' }
 run = 'node test/server.mjs'
 
 [[task]]
 name = 'test:browser'
-deps = ['dist/system.js', 'dist/extras/*.js', 'npm:install']
+deps = ['dist/system.js', 'dist/system-react.js', 'dist/extras/*.js', 'npm:install']
 run = 'node test/server.mjs'
 
 [[task]]

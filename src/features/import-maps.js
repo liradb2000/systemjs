@@ -1,7 +1,7 @@
 /*
  * SystemJS browser attachments for script and import map processing
  */
-import { baseUrl, resolveAndComposeImportMap, hasDocument, resolveUrl } from '../common.js';
+import { baseUrl, resolveAndComposeImportMap, hasDocument, resolveUrl,env as _env } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
@@ -41,7 +41,7 @@ function processScripts () {
       script.sp = true;
       if (!script.src)
         return;
-      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl)).catch(function (e) {
+      _env.global.System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl)).catch(function (e) {
         // if there is a script load error, dispatch an "error" event
         // on the script tag.
         if (e.message.indexOf('https://github.com/systemjs/systemjs/blob/main/docs/errors.md#3') > -1) {
